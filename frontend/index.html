@@ -39,6 +39,9 @@
                     <th>pH</th>
                     <th>Umidade</th>
                     <th>Temperatura</th>
+                    <th>Condutividade Elétrica</th>
+                    <th>Salinidade</th>
+                    <th>NPK</th>
                 </tr>
             </thead>
             <tbody>
@@ -73,15 +76,22 @@
         document.getElementById("perfil").style.display = "block";
         document.getElementById("mensagem").innerText = "";
 
-        // Preencher dados do agricultor
-        if (perfil.agricultor) {
+        // Preencher dados do agricultor unificados
+        if (perfil.nome_fazenda) {
+            document.getElementById("nome_fazenda").value = perfil.nome_fazenda || "";
+            document.getElementById("localizacao").value = perfil.localizacao || "";
+        } else if (perfil.agricultor) {
+            // fallback if nested agricultor object still present
             document.getElementById("nome_fazenda").value = perfil.agricultor.nome_fazenda || "";
             document.getElementById("localizacao").value = perfil.agricultor.localizacao || "";
-            // Buscar leituras de solo
-            buscarLeiturasSolo(perfil.agricultor._id);
         } else {
             document.getElementById("nome_fazenda").value = "";
             document.getElementById("localizacao").value = "";
+        }
+        // Preencher leituras de solo unificadas
+        if (perfil.leituras_solo && Array.isArray(perfil.leituras_solo)) {
+            preencherTabelaLeituras(perfil.leituras_solo);
+        } else {
             limparTabelaLeituras();
         }
             } catch (error) {
@@ -150,6 +160,9 @@
                     <td>${leitura.ph}</td>
                     <td>${leitura.umidade}</td>
                     <td>${leitura.temperatura}</td>
+                    <td>${leitura.condutividade_eletrica}</td>
+                    <td>${leitura.salinidade}</td>
+                    <td>${leitura.NPK}</td>
                 `;
                 tbody.appendChild(tr);
             });

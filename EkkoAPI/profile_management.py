@@ -7,6 +7,7 @@ from pymongo import MongoClient
 import os
 from dotenv import load_dotenv
 from EkkoAPI.soil_readings import router as soil_router
+from datetime import datetime
 
 # Carrega variáveis do .env 
 load_dotenv()
@@ -44,6 +45,36 @@ def visualizar_perfil(usuario_id: str):
         if not usuario:
             raise HTTPException(status_code=404, detail="Usuário não encontrado")
         perfil = serialize_user(usuario)
+
+        # Buscar leituras de solo associadas ao usuário
+        soil_collection = db["leituras_solo"]
+        leituras = list(soil_collection.find({"usuario_id": ObjectId(usuario_id)}))
+        for leitura in leituras:
+            leitura["_id"] = str(leitura["_id"])
+            leitura["usuario_id"] = str(leitura["usuario_id"])
+            # Formatar data_leitura se timestamp presente
+            timestamp = leitura.get("timestamp") or leitura.get("data_leitura")
+            if timestamp and hasattr(timestamp, "isoformat"):
+                leitura["data_leitura"] = timestamp.isoformat()
+            elif isinstance(timestamp, str):
+                try:
+                    dt = datetime.fromisoformat(timestamp)
+                    leitura["data_leitura"] = dt.isoformat()
+                except Exception:
+                    leitura["data_leitura"] = ""
+            else:
+                leitura["data_leitura"] = ""
+            # Ajustar nomes alternativos de campos
+            leitura["umidade"] = leitura.get("umidade_solo", leitura.get("umidade", 0))
+            leitura["temperatura"] = leitura.get("temperatura_solo", leitura.get("temperatura", 0))
+            leitura["ph"] = leitura.get("pH", leitura.get("ph", 0))
+            leitura["condutividade_eletrica"] = leitura.get("condutividade_eletrica", 0)
+            leitura["dispositivo"] = leitura.get("dispositivo", "")
+            leitura["salinidade"] = leitura.get("salinidade", 0)
+            leitura["NPK"] = leitura.get("NPK", 0)
+
+        perfil["leituras_solo"] = leituras
+
         return perfil
     except HTTPException as http_exc:
         raise http_exc

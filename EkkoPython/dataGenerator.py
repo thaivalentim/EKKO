@@ -34,7 +34,7 @@ def gerar_usuario_fake():
     }
 
 def gerar_leitura_solo_fake(usuario_id):
-    """Gera uma leitura simulada de solo vinculada ao usuário."""
+    """Gera uma leitura simulada de solo vinculada ao usuário via ID."""
     return {
         "usuario_id": usuario_id,
         "dispositivo": "EKKO - Agro & Automação",
