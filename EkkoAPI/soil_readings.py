@@ -11,9 +11,8 @@ load_dotenv()
 MONGO_URI = os.getenv("MONGO_URI") or "mongodb+srv://thaizavalentim:Lildashboard13_@testeekko2507.fmbmatr.mongodb.net/?retryWrites=true&w=majority&appName=testeEkko2507"
 
 client = MongoClient(MONGO_URI)
-db = client["EkkoDB"]
+db = client["EkkoDB_UnifiedUser"]
 soil_collection = db["leituras_solo"]
-farmers_collection = db["agricultores"]
 
 router = APIRouter()
 
@@ -48,17 +47,17 @@ def serialize_soil_reading(reading) -> dict:
     reading["ph"] = reading.get("ph", 0)
     return reading
 
-@router.get("/leituras_solo/{agricultor_id}", response_model=List[LeituraSolo])
-def obter_leituras_solo(agricultor_id: str):
+@router.get("/leituras_solo/{usuario_id}", response_model=List[LeituraSolo])
+def obter_leituras_solo(usuario_id: str):
     try:
         # Tenta converter para ObjectId (isso valida o formato do ID)
         try:
-            agricultor_obj_id = ObjectId(agricultor_id)
+            usuario_obj_id = ObjectId(usuario_id)
         except InvalidId:
             raise HTTPException(status_code=400, detail="ID inválido")
 
-        # Busca leituras diretamente pelo agricultor_id
-        leituras = list(soil_collection.find({"agricultor_id": agricultor_obj_id}))
+        # Busca leituras diretamente pelo usuario_id
+        leituras = list(soil_collection.find({"usuario_id": usuario_obj_id}))
         return [serialize_soil_reading(l) for l in leituras]
 
     except HTTPException:

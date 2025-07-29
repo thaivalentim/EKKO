@@ -14,9 +14,8 @@ MONGO_URI = os.getenv("MONGO_URI") or "mongodb+srv://thaizavalentim:Lildashboard
 
 # Conexão MongoDB
 client = MongoClient(MONGO_URI)
-db = client["EkkoDB"]
-users_collection = db["users"]
-farmers_collection = db["agricultores"]
+db = client["EkkoDB_UnifiedUser"]
+usuarios_collection = db["usuarios"]
 
 router = APIRouter()
 
@@ -41,13 +40,10 @@ def visualizar_perfil(usuario_id: str):
     try:
         if not ObjectId.is_valid(usuario_id):
             raise HTTPException(status_code=400, detail="ID inválido")
-        usuario = users_collection.find_one({"_id": ObjectId(usuario_id)})
+        usuario = usuarios_collection.find_one({"_id": ObjectId(usuario_id)})
         if not usuario:
             raise HTTPException(status_code=404, detail="Usuário não encontrado")
-        agricultor = farmers_collection.find_one({"user_id": ObjectId(usuario_id)})
         perfil = serialize_user(usuario)
-        if agricultor:
-            perfil["agricultor"] = serialize_farmer(agricultor)
         return perfil
     except HTTPException as http_exc:
         raise http_exc
@@ -64,10 +60,10 @@ def atualizar_perfil(usuario_id: str, dados: UsuarioUpdate):
         update_data = {k: v for k, v in dados.dict().items() if v is not None}
         if not update_data:
             raise HTTPException(status_code=400, detail="Nenhum dado para atualizar")
-        result = users_collection.update_one({"_id": ObjectId(usuario_id)}, {"$set": update_data})
+        result = usuarios_collection.update_one({"_id": ObjectId(usuario_id)}, {"$set": update_data})
         if result.matched_count == 0:
             raise HTTPException(status_code=404, detail="Usuário não encontrado")
-        usuario = users_collection.find_one({"_id": ObjectId(usuario_id)})
+        usuario = usuarios_collection.find_one({"_id": ObjectId(usuario_id)})
         return serialize_user(usuario)
     except HTTPException as http_exc:
         raise http_exc

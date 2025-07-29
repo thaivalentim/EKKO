@@ -18,8 +18,8 @@ MONGO_URI = os.getenv("MONGO_URI") or "mongodb+srv://thaizavalentim:Lildashboard
 
 # Conexão MongoDB
 client = MongoClient(MONGO_URI)
-db = client["EkkoDB"]
-users_collection = db["users"]
+db = client["EkkoDB_UnifiedUser"]
+usuarios_collection = db["usuarios"]
 
 # FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -56,7 +56,7 @@ def root():
 @app.get("/usuarios", response_model=List[dict])
 def listar_usuarios():
     try:
-        usuarios = list(users_collection.find())
+        usuarios = list(usuarios_collection.find())
         return [serialize_user(u) for u in usuarios]
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao listar usuários: {str(e)}")
@@ -65,7 +65,7 @@ def listar_usuarios():
 def criar_usuario(usuario: Usuario):
     try:
         novo = usuario.dict()
-        result = users_collection.insert_one(novo)
+        result = usuarios_collection.insert_one(novo)
         novo["_id"] = str(result.inserted_id)
         return novo
     except Exception as e:
@@ -76,7 +76,7 @@ def obter_usuario(usuario_id: str):
     try:
         if not ObjectId.is_valid(usuario_id):
             raise HTTPException(status_code=400, detail="ID inválido")
-        usuario = users_collection.find_one({"_id": ObjectId(usuario_id)})
+        usuario = usuarios_collection.find_one({"_id": ObjectId(usuario_id)})
         if not usuario:
             raise HTTPException(status_code=404, detail="Usuário não encontrado")
         return serialize_user(usuario)

@@ -4,14 +4,14 @@ BASE_URL = "http://127.0.0.1:8000"
 
 def test_obter_perfil_completo_valido():
     # OBS: usar um ID válido existente no banco
-    usuario_id = "6886ea99f7bd5fd37e12d77a"
+    usuario_id = "6888244deacb3f7a4aae4077"
     response = requests.get(f"{BASE_URL}/perfil/{usuario_id}")
     assert response.status_code == 200
     perfil = response.json()
     assert "nome" in perfil
     assert "email" in perfil
     assert "papel" in perfil
-    assert "agricultor" in perfil
+    # Removed 'agricultor' field assertion as it no longer exists
 
 def test_obter_leituras_solo_valido():
     # Usar ID válido de agricultor existente no banco de dados
