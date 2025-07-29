@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Visualizar e Atualizar Perfil</title>
+</head>
+<body>
+    <h1>Gerenciamento de Perfil de Usuário</h1>
+
+    <label for="userId">ID do Usuário:</label>
+    <input type="text" id="userId" placeholder="Digite o ID do usuário" />
+    <button onclick="buscarPerfil()">Buscar Perfil</button>
+
+    <div id="perfil" style="display:none; margin-top:20px;">
+    <h2>Perfil do Usuário</h2>
+    <form id="formPerfil" onsubmit="atualizarPerfil(event)">
+        <label for="nome">Nome:</label><br />
+        <input type="text" id="nome" name="nome" /><br /><br />
+
+        <label for="email">Email:</label><br />
+        <input type="email" id="email" name="email" /><br /><br />
+
+        <label for="papel">Papel:</label><br />
+        <input type="text" id="papel" name="papel" /><br /><br />
+
+        <h3>Dados do Agricultor</h3>
+        <label for="nome_fazenda">Nome da Fazenda:</label><br />
+        <input type="text" id="nome_fazenda" name="nome_fazenda" readonly /><br /><br />
+
+        <label for="localizacao">Localização:</label><br />
+        <input type="text" id="localizacao" name="localizacao" readonly /><br /><br />
+
+        <h3>Leituras de Solo</h3>
+        <table border="1" id="tabelaLeituras">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>pH</th>
+                    <th>Umidade</th>
+                    <th>Temperatura</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+
+        <button type="submit">Atualizar Perfil</button>
+    </form>
+    <div id="mensagem"></div>
+</div>
+
+    <script>
+        const baseUrl = "http://127.0.0.1:8000";
+
+        async function buscarPerfil() {
+            const userId = document.getElementById("userId").value.trim();
+            if (!userId) {
+                alert("Por favor, digite o ID do usuário.");
+                return;
+            }
+            try {
+                const response = await fetch(`${baseUrl}/perfil/${userId}`);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    alert(`Erro ao buscar perfil: ${errorData.detail}`);
+                    return;
+                }
+                const perfil = await response.json();
+                document.getElementById("nome").value = perfil.nome || "";
+                document.getElementById("email").value = perfil.email || "";
+                document.getElementById("papel").value = perfil.papel || "";
+        document.getElementById("perfil").style.display = "block";
+        document.getElementById("mensagem").innerText = "";
+
+        // Preencher dados do agricultor
+        if (perfil.agricultor) {
+            document.getElementById("nome_fazenda").value = perfil.agricultor.nome_fazenda || "";
+            document.getElementById("localizacao").value = perfil.agricultor.localizacao || "";
+            // Buscar leituras de solo
+            buscarLeiturasSolo(perfil.agricultor._id);
+        } else {
+            document.getElementById("nome_fazenda").value = "";
+            document.getElementById("localizacao").value = "";
+            limparTabelaLeituras();
+        }
+            } catch (error) {
+                alert("Erro ao conectar com a API.");
+            }
+        }
+
+        async function atualizarPerfil(event) {
+            event.preventDefault();
+            const userId = document.getElementById("userId").value.trim();
+            const nome = document.getElementById("nome").value.trim();
+            const email = document.getElementById("email").value.trim();
+            const papel = document.getElementById("papel").value.trim();
+
+            const dados = {};
+            if (nome) dados.nome = nome;
+            if (email) dados.email = email;
+            if (papel) dados.papel = papel;
+
+            try {
+                const response = await fetch(`${baseUrl}/perfil/${userId}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(dados),
+                });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    document.getElementById("mensagem").innerText = `Erro: ${errorData.detail}`;
+                    return;
+                }
+                const perfilAtualizado = await response.json();
+                document.getElementById("mensagem").innerText = "Perfil atualizado com sucesso!";
+            } catch (error) {
+                document.getElementById("mensagem").innerText = "Erro ao conectar com a API.";
+            }
+        }
+    </script>
+
+    <script>
+        async function buscarLeiturasSolo(agricultorId) {
+            try {
+                const response = await fetch(`${baseUrl}/leituras_solo/${agricultorId}`);
+                if (!response.ok) {
+                    alert("Erro ao buscar leituras de solo.");
+                    limparTabelaLeituras();
+                    return;
+                }
+                const leituras = await response.json();
+                preencherTabelaLeituras(leituras);
+            } catch (error) {
+                alert("Erro ao conectar com a API para leituras de solo.");
+                limparTabelaLeituras();
+            }
+        }
+
+        function preencherTabelaLeituras(leituras) {
+            const tbody = document.querySelector("#tabelaLeituras tbody");
+            tbody.innerHTML = "";
+            leituras.forEach((leitura) => {
+                const tr = document.createElement("tr");
+                const data = new Date(leitura.data_leitura);
+                tr.innerHTML = `
+                    <td>${data.toLocaleString()}</td>
+                    <td>${leitura.ph}</td>
+                    <td>${leitura.umidade}</td>
+                    <td>${leitura.temperatura}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function limparTabelaLeituras() {
+            const tbody = document.querySelector("#tabelaLeituras tbody");
+            tbody.innerHTML = "";
+        }
+    </script>
+</body>
+</html>
